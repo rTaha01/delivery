@@ -60,7 +60,7 @@ class _ChooseNumberState extends State<ChooseNumber> {
                     verificationId: verificationId,
                   ),
                 ),
-                (route) => true);
+                (route) => false);
           },
           codeAutoRetrievalTimeout: (e) {
             CommonWidget.toastMessage("Error! $e");
