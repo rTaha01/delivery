@@ -74,7 +74,7 @@ class _PhonePINState extends State<PhonePIN> {
               MaterialPageRoute(
                 builder: (context) => const MainScreen(),
               ),
-              (route) => true);
+              (route) => false);
         }
       } catch (e) {
         CommonWidget.toastMessage("Invalid OTP");
