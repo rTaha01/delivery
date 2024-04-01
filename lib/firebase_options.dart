@@ -63,6 +63,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1065920604068',
     projectId: 'deliverapp-4ce26',
     storageBucket: 'deliverapp-4ce26.appspot.com',
+    androidClientId: '1065920604068-qpte8illchj280si95o4rcrnf9ho9spt.apps.googleusercontent.com',
+    iosClientId: '1065920604068-m58cl1r1tjie77iudenb4kna0ikbek82.apps.googleusercontent.com',
     iosBundleId: 'com.example.deliveryApp',
   );
 }

@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:delivery_app/screens/home/main_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -5,7 +7,7 @@ import 'package:pinput/pinput.dart';
 
 import '../../../utlis/color_codes.dart';
 import '../../../utlis/common_widget.dart';
-import '../../screens/application/application_req.dart';
+import '../../controller/fetchNumber.dart';
 
 class PhonePIN extends StatefulWidget {
   final String number;
@@ -53,21 +55,29 @@ class _PhonePINState extends State<PhonePIN> {
           CommonWidget.toastMessage("PIN кеминде 6 сандан турушу керек");
         } else {
           CommonWidget.loader(context);
-          final credential = PhoneAuthProvider.credential (
+          final credential = PhoneAuthProvider.credential(
             verificationId: widget.verificationId,
             smsCode: pin,
           );
           await FirebaseAuth.instance.signInWithCredential(credential);
+          String? phoneNumber = currentUserPhoneNumber();
+          if (phoneNumber != null) {
+            await FirebaseFirestore.instance.collection(phoneNumber);
+            print("Firestore collection created at $phoneNumber");
+          } else {
+            print("Error: Phone number is null");
+          }
+
           Navigator.pop(context);
           Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
-                builder: (context) => const ApplicationRequest(),
+                builder: (context) => const MainScreen(),
               ),
-                  (route) => true);
+              (route) => true);
         }
       } catch (e) {
-        CommonWidget.toastMessage("Invalid OTP or something went wrong");
+        CommonWidget.toastMessage("Invalid OTP");
         Navigator.pop(context);
       }
     }

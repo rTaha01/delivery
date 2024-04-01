@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:delivery_app/screens/profile_info/profile_info.dart';
@@ -10,11 +12,12 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:marquee/marquee.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../auth/chooseNumber.dart';
 import '../../controller/contact_controller.dart';
+import '../../controller/fetchNumber.dart';
 import '../../utlis/color_codes.dart';
 import '../../widgets/text_field_widget.dart';
+import '../application/application_req.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -79,6 +82,12 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  String generateOrderNumber() {
+    int randomInt = Random().nextInt(900000) +
+        100000; // Random integer between 100000 and 999999
+    return "#$randomInt";
+  }
+
   Future<void> _saveApplication(
     String name,
     String phone,
@@ -87,6 +96,8 @@ class _MainScreenState extends State<MainScreen> {
     isPay,
     String additionInformation,
   ) async {
+    String? phoneNumber = currentUserPhoneNumber();
+    String orderNumber = generateOrderNumber();
     if (name.isEmpty || name == "") {
       CommonWidget.toastMessage("Please Enter the name");
     } else if (!RegExp(
@@ -103,28 +114,35 @@ class _MainScreenState extends State<MainScreen> {
       CommonWidget.toastMessage("Add Some additional information");
     } else {
       Map<String, dynamic> requestData = {
-        'name': name,
-        'phone': number + phone,
-        'address': address,
+        'orderNo': orderNumber,
+        'name': nameController.text,
+        'phone': number + numberController.text,
+        'address': addressController.text,
+        'price': moneyController.text,
         'paymentStatus':
             isPay != null ? (isPay ? 'PAID' : 'UNPAID') : 'UNKNOWN',
         'additionalInfo': additionalInfo.text,
+        "date": DateTime.now(),
       };
       try {
         CommonWidget.loader(context);
-        DocumentReference docRef = await FirebaseFirestore.instance
-            .collection('delivery')
-            .add(requestData);
-        String requestUID = docRef.id;
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('lastRequestUID', requestUID);
-        print('Request saved successfully with UID: $requestUID');
-
-        String? storedUID = prefs.getString('lastRequestUID');
-        print('UID stored in device: $storedUID');
-
-        CommonWidget.toastMessage("Request submitted successfully");
+        await FirebaseFirestore.instance
+            .collection(phoneNumber!)
+            .doc("applicationRequest $orderNumber")
+            .set(requestData);
+        // String requestUID = docRef.id;
+        //
+        // SharedPreferences prefs = await SharedPreferences.getInstance();
+        // List<String>? storedUIDs = prefs.getStringList('deliveryUIDs');
+        // if (storedUIDs != null) {
+        //   storedUIDs.add(requestUID);
+        // } else {
+        //   storedUIDs = [requestUID];
+        // }
+        // await prefs.setStringList('deliveryUIDs', storedUIDs);
         Navigator.pop(context);
+        _showSubmitSuccessDialog();
+        print("Application request saved with order number: $orderNumber");
         setState(() {
           nameController.clear();
           numberController.clear();
@@ -213,7 +231,7 @@ class _MainScreenState extends State<MainScreen> {
                           "assets/images/oboia.png",
                           fit: BoxFit.fill,
                           height: 520.h,
-                          width: 400,
+                          width: double.infinity,
                         )),
                     Column(
                       children: [
@@ -239,13 +257,13 @@ class _MainScreenState extends State<MainScreen> {
                             const Icon(
                               Icons.phone,
                               size: 20,
-                              color: Colors.black,
+                              color: Colors.black87,
                             ),
                           ),
                         ),
                         Container(
                           margin: EdgeInsets.only(top: 15.h),
-                          height: 45.h,
+                          height: 40.h,
                           padding: EdgeInsets.only(left: 10.0.w, right: 10.w),
                           width: double.infinity,
                           child: TextFormField(
@@ -257,8 +275,8 @@ class _MainScreenState extends State<MainScreen> {
                               }
                             },
                             cursorColor: Colors.black,
-                            cursorHeight: 13.h,
-                            cursorWidth: 1.5.w,
+                            cursorHeight: 20.h,
+                            cursorWidth: 1.w,
                             decoration: InputDecoration(
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
@@ -267,8 +285,8 @@ class _MainScreenState extends State<MainScreen> {
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(
-                                      color: Colors.black, width: 1.5),
+                                  borderSide:
+                                      BorderSide(color: hintColor, width: 1.5),
                                 ),
                                 contentPadding: const EdgeInsets.all(10),
                                 prefixIcon: Icon(
@@ -279,7 +297,7 @@ class _MainScreenState extends State<MainScreen> {
                                 hintText: 'Адрес (2гис)',
                                 hintStyle: TextStyle(
                                   color: hintColor,
-                                  fontSize: 14.sp,
+                                  fontSize: 13.sp,
                                 )),
                             style: TextStyle(
                                 fontSize: 13.0.sp, fontWeight: FontWeight.w500),
@@ -506,7 +524,7 @@ class _MainScreenState extends State<MainScreen> {
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) =>
-                                        const ChooseNumber()));
+                                        const ApplicationRequest()));
                           },
                           child: Container(
                             height: 45.h,
@@ -553,7 +571,7 @@ class _MainScreenState extends State<MainScreen> {
               child: Icon(
                 Icons.account_circle,
                 shadows: const [Shadow(color: Colors.white)],
-                color: Colors.blue,
+                color: hintColor,
                 size: 25.sp,
               ),
             ),
@@ -606,7 +624,7 @@ class _MainScreenState extends State<MainScreen> {
                             Navigator.pushAndRemoveUntil(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => ChooseNumber()),
+                                  builder: (context) => const ChooseNumber()),
                               (route) => false,
                             );
                           },
@@ -627,5 +645,25 @@ class _MainScreenState extends State<MainScreen> {
             )
           ],
         ));
+  }
+
+  void _showSubmitSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Success"),
+          content: Text("Application submitted successfully!"),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

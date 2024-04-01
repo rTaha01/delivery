@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../controller/fetchNumber.dart';
 import '../../utlis/color_codes.dart';
 import '../home/main_page.dart';
 
@@ -93,7 +94,8 @@ class _ProfileSetupState extends State<ProfileSetup> {
     );
     await imageRef.putFile(compressedImageFile, metadata);
     final compressedSize = await compressedImageFile.length();
-    print('Compressed image size: ${(compressedSize / 1024).toStringAsFixed(1)} KB');
+    print(
+        'Compressed image size: ${(compressedSize / 1024).toStringAsFixed(1)} KB');
 
     return await imageRef.getDownloadURL();
   }
@@ -108,7 +110,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
       try {
         if (_image == null) {
           return CommonWidget.toastMessage("Please Select Image");
-        } else if (name == "" || name.isEmpty || name.length > 4) {
+        } else if (name == "" || name.isEmpty || name.length < 4) {
           CommonWidget.toastMessage("Enter your name");
         } else if (!RegExp(r'^[\w-]+(\.[\w-]+)*@([a-z\d-]+\.)+[a-z]{2,}$')
             .hasMatch(email)) {
@@ -117,15 +119,28 @@ class _ProfileSetupState extends State<ProfileSetup> {
           CommonWidget.toastMessage("Please! Enter address");
         } else {
           CommonWidget.loader(context);
+          String? phoneNumber = currentUserPhoneNumber();
           final downloadUrl = await _uploadImage();
+          // First, set the initial profile info document if it doesn't exist
           await FirebaseFirestore.instance
-              .collection("delivery")
-              .doc('Profile Info').set({
+              .collection(phoneNumber!)
+              .doc('Profile Info')
+              .set({
+            'name': _nameController.text,
+            'address': _addressController.text,
+            'email': _emailController.text,
+            'profileImageUrl': downloadUrl,
+          }, SetOptions(merge: true));
+          await FirebaseFirestore.instance
+              .collection(phoneNumber)
+              .doc('Profile Info')
+              .update({
             'name': _nameController.text,
             'address': _addressController.text,
             'email': _emailController.text,
             'profileImageUrl': downloadUrl,
           });
+
           Navigator.pop(context);
           CommonWidget.toastMessage("Profile upload");
           Navigator.pushAndRemoveUntil(
@@ -152,7 +167,29 @@ class _ProfileSetupState extends State<ProfileSetup> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile Setup')),
+      appBar: AppBar(
+        title: Text(
+          'Profile Setup',
+          style: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+              fontSize: 17.sp),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: InkWell(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          child: Icon(
+            Icons.arrow_back_ios_new,
+            color: Colors.black87,
+            size: 18.sp,
+          ),
+        ),
+        automaticallyImplyLeading: false,
+        centerTitle: true,
+      ),
       body: SingleChildScrollView(
         // If form is long
         child: Padding(
@@ -169,7 +206,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(100),
                           border: Border.all(
-                              color: Colors.grey.shade300, width: 0.5)),
+                              color: Colors.grey.shade300, width: 1)),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(100),
                         child: _image != null
@@ -177,14 +214,18 @@ class _ProfileSetupState extends State<ProfileSetup> {
                                 _image!,
                                 fit: BoxFit.fill,
                               )
-                            : const Icon(Icons.person, size: 60),
+                            : Icon(
+                                Icons.person,
+                                size: 80.sp,
+                                color: hintColor,
+                              ),
                       )),
                 ),
                 SizedBox(
                   height: 25.h,
                 ),
                 SizedBox(
-                  height: 48.h,
+                  height: 40.h,
                   child: Padding(
                     padding: EdgeInsets.only(
                       left: 5.0.w,
@@ -193,10 +234,9 @@ class _ProfileSetupState extends State<ProfileSetup> {
                     child: TextFormField(
                       controller: _nameController,
                       cursorColor: Colors.black,
-                      cursorHeight: 13.h,
-                      cursorWidth: 1.5.w,
+                      cursorHeight: 20.h,
+                      cursorWidth: 1.w,
                       textAlign: TextAlign.start,
-                      textAlignVertical: TextAlignVertical.bottom,
                       decoration: InputDecoration(
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -205,17 +245,18 @@ class _ProfileSetupState extends State<ProfileSetup> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                                color: Colors.black, width: 1.5),
+                            borderSide:
+                                BorderSide(color: hintColor, width: 1.5),
                           ),
                           prefixIcon: const Icon(
                             Icons.account_circle_rounded,
-                            color: Colors.black,
+                            color: Colors.black87,
                           ),
+                          contentPadding: EdgeInsets.symmetric(vertical: 10.h),
                           hintText: "Enter Your Name",
                           hintStyle: TextStyle(
                             color: hintColor,
-                            fontSize: 14.sp,
+                            fontSize: 13.sp,
                           )),
                       style: TextStyle(
                           fontSize: 13.0.sp, fontWeight: FontWeight.w500),
@@ -226,7 +267,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
                   height: 15.h,
                 ),
                 SizedBox(
-                  height: 48.h,
+                  height: 40.h,
                   child: Padding(
                     padding: EdgeInsets.only(
                       left: 5.0.w,
@@ -235,8 +276,8 @@ class _ProfileSetupState extends State<ProfileSetup> {
                     child: TextFormField(
                       controller: _emailController,
                       cursorColor: Colors.black,
-                      cursorHeight: 13.h,
-                      cursorWidth: 1.5.w,
+                      cursorHeight: 20.h,
+                      cursorWidth: 1.w,
                       textAlign: TextAlign.start,
                       textAlignVertical: TextAlignVertical.bottom,
                       decoration: InputDecoration(
@@ -247,17 +288,18 @@ class _ProfileSetupState extends State<ProfileSetup> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                                color: Colors.black, width: 1.5),
+                            borderSide:
+                                BorderSide(color: hintColor, width: 1.5),
                           ),
                           prefixIcon: const Icon(
                             Icons.email,
-                            color: Colors.black,
+                            color: Colors.black87,
                           ),
+                          contentPadding: EdgeInsets.symmetric(vertical: 10.h),
                           hintText: "Enter Your Email",
                           hintStyle: TextStyle(
                             color: hintColor,
-                            fontSize: 14.sp,
+                            fontSize: 13.sp,
                           )),
                       style: TextStyle(
                           fontSize: 13.0.sp, fontWeight: FontWeight.w500),
@@ -268,7 +310,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
                   height: 15.h,
                 ),
                 SizedBox(
-                  height: 48.h,
+                  height: 40.h,
                   child: Padding(
                     padding: EdgeInsets.only(
                       left: 5.0.w,
@@ -277,8 +319,8 @@ class _ProfileSetupState extends State<ProfileSetup> {
                     child: TextFormField(
                       controller: _addressController,
                       cursorColor: Colors.black,
-                      cursorHeight: 13.h,
-                      cursorWidth: 1.5.w,
+                      cursorHeight: 20.h,
+                      cursorWidth: 1.w,
                       onChanged: (value) {
                         _getPredictions(value);
                         if (kDebugMode) {
@@ -293,17 +335,18 @@ class _ProfileSetupState extends State<ProfileSetup> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                                color: Colors.black, width: 1.5),
+                            borderSide:
+                                BorderSide(color: hintColor, width: 1.5),
                           ),
                           prefixIcon: const Icon(
                             Icons.location_on_sharp,
-                            color: Colors.black,
+                            color: Colors.black87,
                           ),
-                          hintText: "Enter Your Address",
+                          contentPadding: EdgeInsets.symmetric(vertical: 10.h),
+                          hintText: "Enter Your Home Address",
                           hintStyle: TextStyle(
                             color: hintColor,
-                            fontSize: 14.sp,
+                            fontSize: 13.sp,
                           )),
                       style: TextStyle(
                           fontSize: 13.0.sp, fontWeight: FontWeight.w500),
@@ -376,7 +419,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
                             context);
                       },
                       style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all(Colors.cyan),
+                        backgroundColor: MaterialStateProperty.all(hintColor),
                         shape:
                             MaterialStateProperty.all<RoundedRectangleBorder>(
                           RoundedRectangleBorder(

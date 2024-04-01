@@ -15,7 +15,7 @@ class ChooseNumber extends StatefulWidget {
 class _ChooseNumberState extends State<ChooseNumber> {
   String? userPhoneNumber = currentUserPhoneNumber();
 
-  String number = "+92";
+  String number = "+996";
   TextEditingController phone = TextEditingController();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
@@ -78,20 +78,6 @@ class _ChooseNumberState extends State<ChooseNumber> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: InkWell(
-          onTap: () {
-            Navigator.pop(context);
-          },
-          child: Icon(
-            Icons.arrow_back_ios_new,
-            color: Colors.black,
-            size: 20.sp,
-          ),
-        ),
-      ),
       body: SingleChildScrollView(
         child: Form(
           key: formKey,
@@ -99,7 +85,7 @@ class _ChooseNumberState extends State<ChooseNumber> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               SizedBox(
-                height: 150.h,
+                height: 200.h,
               ),
               Padding(
                 padding: EdgeInsets.only(left: 25.0.w),
@@ -134,48 +120,51 @@ class _ChooseNumberState extends State<ChooseNumber> {
               SizedBox(
                 height: 5.h,
               ),
-              Padding(
-                padding: EdgeInsets.only(left: 25.0.w, right: 30.0.w),
-                child: TextFormField(
-                  keyboardType: TextInputType.number,
-                  controller: phone,
-                  maxLines: 1,
-                  onSaved: (value) {},
-                  minLines: 1,
-                  cursorColor: Colors.black,
-                  cursorHeight: 18.h,
-                  cursorWidth: 1.5.w,
-                  decoration: InputDecoration(
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide:
-                            const BorderSide(color: Colors.black, width: 0.6),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide:
-                            const BorderSide(color: Colors.black, width: 1.5),
-                      ),
-                      contentPadding: const EdgeInsets.all(10),
-                      prefixIcon: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 17.0, horizontal: 8.0),
-                        child: Text(
-                          number,
-                          style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 14.0.sp,
-                              fontWeight: FontWeight.w600),
+              SizedBox(
+                height: 40.h,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 25.0.w, right: 30.0.w),
+                  child: TextFormField(
+                    keyboardType: TextInputType.number,
+                    controller: phone,
+                    maxLines: 1,
+                    onSaved: (value) {},
+                    minLines: 1,
+                    cursorColor: Colors.black,
+                    cursorHeight: 20.h,
+                    cursorWidth: 1.w,
+                    decoration: InputDecoration(
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide:
+                              const BorderSide(color: Colors.black, width: 0.6),
                         ),
-                      ),
-                      hintText: "987654321",
-                      hintStyle: TextStyle(
-                        color: Colors.grey.shade500,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14.sp,
-                      )),
-                  style:
-                      TextStyle(fontSize: 14.0.sp, fontWeight: FontWeight.w700),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide:
+                              const BorderSide(color: Colors.black, width: 1.5),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                        prefixIcon: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 15.0, horizontal: 8.0),
+                          child: Text(
+                            number,
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 13.0.sp,
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        hintText: "987654321",
+                        hintStyle: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 13.sp,
+                        )),
+                    style:
+                        TextStyle(fontSize: 13.0.sp, fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
               const SizedBox(
