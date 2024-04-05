@@ -177,7 +177,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: InkWell(
+        leading: GestureDetector(
           onTap: () {
             Navigator.pop(context);
           },

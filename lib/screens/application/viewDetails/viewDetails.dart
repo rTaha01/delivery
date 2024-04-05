@@ -7,7 +7,6 @@ class ViewDetails extends StatefulWidget {
   final String? name;
   final String phone;
   final String address;
-  final String price;
   final String paymentStatus;
   final String additionalInfo;
   const ViewDetails(
@@ -15,7 +14,6 @@ class ViewDetails extends StatefulWidget {
       required this.name,
       required this.phone,
       required this.address,
-      required this.price,
       required this.paymentStatus,
       required this.additionalInfo});
 
@@ -31,7 +29,7 @@ class _ViewDetailsState extends State<ViewDetails> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: InkWell(
+        leading: GestureDetector(
           onTap: () {
             Navigator.pop(context);
           },
@@ -61,13 +59,43 @@ class _ViewDetailsState extends State<ViewDetails> {
             value: 'Phone: ',
             text: "${widget.phone}",
           ),
-          CustomContainerWidget(
-            value: 'Address: ',
-            text: "${widget.address}",
-          ),
-          CustomContainerWidget(
-            value: 'Price: ',
-            text: "${widget.price}",
+          Padding(
+            padding: const EdgeInsets.only(left: 15.0, right: 15.0, top: 10),
+            child: Container(
+              height: 40.h,
+              width: 350.w,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey.shade100,
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    SizedBox(width: 10.w),
+                    Text(
+                      "Address: ",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 11.sp,
+                        color: Colors.black,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    SizedBox(width: 4.w),
+                    Text(
+                      widget.address,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.sp,
+                        color: Colors.black,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
           CustomContainerWidget(
             value: 'Payment Status: ',

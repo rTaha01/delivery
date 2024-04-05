@@ -37,7 +37,6 @@ String contactNumber = "+996558149761";
 TextEditingController nameController = TextEditingController();
 TextEditingController numberController = TextEditingController();
 TextEditingController addressController = TextEditingController();
-TextEditingController moneyController = TextEditingController();
 TextEditingController additionalInfo = TextEditingController();
 String number = "+92";
 bool? _isPay = false;
@@ -92,7 +91,6 @@ class _MainScreenState extends State<MainScreen> {
     String name,
     String phone,
     String address,
-    String money,
     isPay,
     String additionInformation,
   ) async {
@@ -106,8 +104,6 @@ class _MainScreenState extends State<MainScreen> {
       CommonWidget.toastMessage("Invalid phone number format");
     } else if (address.isEmpty || address == "") {
       CommonWidget.toastMessage("Enter your address");
-    } else if (money.isEmpty || money == "") {
-      CommonWidget.toastMessage("Enter Price");
     } else if (isPay == null) {
       CommonWidget.toastMessage("Select Price Status");
     } else if (additionInformation.isEmpty || additionInformation == "") {
@@ -115,10 +111,9 @@ class _MainScreenState extends State<MainScreen> {
     } else {
       Map<String, dynamic> requestData = {
         'orderNo': orderNumber,
-        'name': nameController.text,
-        'phone': number + numberController.text,
-        'address': addressController.text,
-        'price': moneyController.text,
+        'name': name,
+        'number': number + phone,
+        'address': address,
         'paymentStatus':
             isPay != null ? (isPay ? 'PAID' : 'UNPAID') : 'UNKNOWN',
         'additionalInfo': additionalInfo.text,
@@ -147,7 +142,6 @@ class _MainScreenState extends State<MainScreen> {
           nameController.clear();
           numberController.clear();
           addressController.clear();
-          moneyController.clear();
           additionalInfo.clear();
           isPay = false;
         });
@@ -354,14 +348,40 @@ class _MainScreenState extends State<MainScreen> {
                           const SizedBox.shrink(),
                         Container(
                           margin: EdgeInsets.only(top: 10.h),
-                          child: CommonField.customField(
-                            TextInputType.number,
-                            moneyController,
-                            "ОПЛАТА",
-                            const Icon(
-                              Icons.attach_money,
-                              size: 20,
-                              color: Colors.black,
+                        ),
+                        Padding(
+                          padding: EdgeInsets.only(left: 10.0.w, right: 10.w),
+                          child: Container(
+                            height: 38.h,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              border:
+                                  Border.all(color: Colors.black, width: 0.6),
+                            ),
+                            margin: EdgeInsets.only(top: 10.h),
+                            child: Row(
+                              children: [
+                                const Padding(
+                                  padding:
+                                      EdgeInsets.symmetric(horizontal: 12.0),
+                                  child: Icon(
+                                    Icons.attach_money,
+                                    size: 20,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                Text(
+                                  _isPay == null
+                                      ? "ОПЛАТА"
+                                      : _isPay!
+                                          ? "төлөнгөн"
+                                          : "төлөнбөгөн (демейки)",
+                                  style: TextStyle(
+                                      color: hintColor,
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -372,14 +392,10 @@ class _MainScreenState extends State<MainScreen> {
                           padding: EdgeInsets.only(left: 10.0.w, right: 10.w),
                           child: GestureDetector(
                             onTap: () {
-                              if (_isPay != null) {
-                                setState(() {
-                                  _isPay = true;
-                                });
-                              } else {
-                                CommonWidget.toastMessage(
-                                    "Please Select the one of the payment options!");
-                              }
+                              setState(() {
+                                _isPay =
+                                    true; // Set the selected payment option to true (төлөнгөн)
+                              });
                             },
                             child: Container(
                               width: double.infinity,
@@ -397,7 +413,7 @@ class _MainScreenState extends State<MainScreen> {
                                     groupValue: _isPay,
                                     onChanged: (value) {
                                       setState(() {
-                                        _isPay = value as bool;
+                                        _isPay = value as bool?;
                                       });
                                     },
                                   ),
@@ -419,14 +435,10 @@ class _MainScreenState extends State<MainScreen> {
                           padding: EdgeInsets.only(left: 10.0.w, right: 10.w),
                           child: GestureDetector(
                             onTap: () {
-                              if (_isPay != null) {
-                                setState(() {
-                                  _isPay = false;
-                                });
-                              } else {
-                                CommonWidget.toastMessage(
-                                    "Please Select the one of the payment options!");
-                              }
+                              setState(() {
+                                _isPay =
+                                    false; // Set the selected payment option to false (төлөнбөгөн)
+                              });
                             },
                             child: Container(
                               width: double.infinity,
@@ -439,14 +451,14 @@ class _MainScreenState extends State<MainScreen> {
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
                                   Radio(
-                                    groupValue: _isPay,
+                                    value: false,
                                     activeColor: Colors.red,
+                                    groupValue: _isPay,
                                     onChanged: (value) {
                                       setState(() {
-                                        _isPay = value as bool;
+                                        _isPay = value;
                                       });
                                     },
-                                    value: false,
                                   ),
                                   const Text(
                                     "төлөнбөгөн (демейки)",
@@ -493,7 +505,6 @@ class _MainScreenState extends State<MainScreen> {
                                 nameController.text,
                                 numberController.text,
                                 addressController.text,
-                                moneyController.text,
                                 _isPay,
                                 additionalInfo.text);
                           },
@@ -652,14 +663,14 @@ class _MainScreenState extends State<MainScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Success"),
-          content: Text("Application submitted successfully!"),
+          title: const Text("Success"),
+          content: const Text("Application submitted successfully!"),
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();
               },
-              child: Text("OK"),
+              child: const Text("OK"),
             ),
           ],
         );

@@ -1,50 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:delivery_app/screens/application/viewDetails/viewDetails.dart';
-import 'package:delivery_app/utlis/color_codes.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../controller/fetchNumber.dart';
-import '../../controller/fetch_details.dart';
-
-Future<List<DeliveryData>> _fetchApplicationRequests() async {
-  List<DeliveryData> applicationRequests = [];
-  String? phoneNumber = currentUserPhoneNumber();
-
-  try {
-    QuerySnapshot querySnapshot =
-        await FirebaseFirestore.instance.collection(phoneNumber!).get();
-
-    for (var doc in querySnapshot.docs) {
-      String name = doc['name'];
-      String number = doc['phone'];
-      String address = doc['address'];
-      String price = doc['price'];
-      String paymentStatus = doc['paymentStatus'];
-      String additionalInfo = doc['additionalInfo'];
-      String orderNo = doc['orderNo'];
-      DeliveryData deliveryData = DeliveryData(
-        name: name,
-        phone: number,
-        address: address,
-        paymentStatus: paymentStatus,
-        additionalInfo: additionalInfo,
-        orderNO: orderNo,
-        price: price,
-      );
-      applicationRequests.add(deliveryData);
-    }
-
-    if (querySnapshot.docs.isEmpty) {
-      print('No application requests found for $phoneNumber');
-    }
-  } catch (e) {
-    print('Error fetching application requests: $e');
-  }
-
-  return applicationRequests;
-}
+import '../../utlis/color_codes.dart';
 
 class ApplicationRequest extends StatefulWidget {
   const ApplicationRequest({super.key});
@@ -53,8 +13,62 @@ class ApplicationRequest extends StatefulWidget {
   State<ApplicationRequest> createState() => _ApplicationRequestState();
 }
 
+class DeliveryData {
+  final String name;
+  final String phoneNumber;
+  final String address;
+  final String paymentStatus;
+  final String additionalInfo;
+  final String orderNO;
+
+  DeliveryData({
+    required this.orderNO,
+    required this.name,
+    required this.phoneNumber,
+    required this.address,
+    required this.paymentStatus,
+    required this.additionalInfo,
+  });
+}
+
 class _ApplicationRequestState extends State<ApplicationRequest> {
   late Future<List<DeliveryData>> _futureApplicationRequests;
+
+  Future<List<DeliveryData>> _fetchApplicationRequests() async {
+    List<DeliveryData> applicationRequests = [];
+    String? phoneNumber = currentUserPhoneNumber();
+
+    try {
+      QuerySnapshot querySnapshot =
+          await FirebaseFirestore.instance.collection(phoneNumber!).get();
+      for (var doc in querySnapshot.docs) {
+        DocumentSnapshot document = await doc.reference.get();
+        String name = document['name'] ?? '';
+        String number = document['number'] ?? '';
+        String address = document['address'] ?? '';
+        String paymentStatus = document['paymentStatus'] ?? '';
+        String additionalInfo = document['additionalInfo'] ?? '';
+        String orderNo = document['orderNo'] ?? '';
+        DeliveryData deliveryData = DeliveryData(
+          name: name,
+          phoneNumber: number,
+          address: address,
+          paymentStatus: paymentStatus,
+          additionalInfo: additionalInfo,
+          orderNO: orderNo,
+        );
+        applicationRequests.add(deliveryData);
+      }
+
+      if (querySnapshot.docs.isEmpty) {
+        print('No application requests found for $phoneNumber');
+      }
+    } catch (e) {
+      print('Error fetching application requests: $e');
+    }
+
+    return applicationRequests;
+  }
 
   @override
   void initState() {
@@ -68,7 +82,7 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: InkWell(
+        leading: GestureDetector(
           onTap: () {
             Navigator.pop(context);
           },
@@ -83,16 +97,17 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
         title: Text(
           'Application Requests',
           style: TextStyle(
-              color: Colors.black87,
-              fontWeight: FontWeight.w600,
-              fontSize: 17.sp),
+            color: Colors.black87,
+            fontWeight: FontWeight.w600,
+            fontSize: 17.sp,
+          ),
         ),
       ),
       body: FutureBuilder<List<DeliveryData>>(
         future: _futureApplicationRequests,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(
               child: Text('Error: ${snapshot.error}'),
@@ -105,10 +120,11 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                 child: Text(
                   'No application',
                   style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 18.sp,
-                      color: Colors.black,
-                      letterSpacing: 0.5),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18.sp,
+                    color: Colors.black,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               );
             } else {
@@ -122,138 +138,122 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                     child: Container(
                       height: 130.h,
                       decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                                color: Colors.grey.shade300,
-                                blurRadius: 1,
-                                spreadRadius: 1,
-                                offset: const Offset(1, 1))
-                          ]),
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.shade300,
+                            blurRadius: 1,
+                            spreadRadius: 1,
+                            offset: const Offset(1, 1),
+                          )
+                        ],
+                      ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox(
-                            height: 10.h,
-                          ),
+                          SizedBox(height: 10.h),
                           Row(
                             children: [
-                              SizedBox(
-                                width: 10.w,
-                              ),
+                              SizedBox(width: 10.w),
                               Text(
                                 "Order no:",
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 12.sp,
-                                    color: Colors.black,
-                                    letterSpacing: 0.5),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 12.sp,
+                                  color: Colors.black,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
-                              SizedBox(
-                                width: 4.w,
-                              ),
+                              SizedBox(width: 4.w),
                               Text(
                                 requestData.orderNO,
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12.sp,
-                                    color: Colors.black,
-                                    letterSpacing: 0.5),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12.sp,
+                                  color: Colors.black,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
                             ],
                           ),
-                          SizedBox(
-                            height: 5.h,
-                          ),
+                          SizedBox(height: 5.h),
                           Row(
                             children: [
-                              SizedBox(
-                                width: 10.w,
-                              ),
+                              SizedBox(width: 10.w),
                               Text(
                                 "Name:",
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 12.sp,
-                                    color: Colors.black,
-                                    letterSpacing: 0.5),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 12.sp,
+                                  color: Colors.black,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
-                              SizedBox(
-                                width: 4.w,
-                              ),
+                              SizedBox(width: 4.w),
                               Text(
                                 requestData.name,
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14.sp,
-                                    color: Colors.black,
-                                    letterSpacing: 0.5),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14.sp,
+                                  color: Colors.black,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
                             ],
                           ),
-                          SizedBox(
-                            height: 5.h,
-                          ),
+                          SizedBox(height: 5.h),
                           Row(
                             children: [
-                              SizedBox(
-                                width: 10.w,
-                              ),
+                              SizedBox(width: 10.w),
                               Text(
                                 "Phone:",
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 12.sp,
-                                    color: Colors.black,
-                                    letterSpacing: 0.5),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 12.sp,
+                                  color: Colors.black,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
-                              SizedBox(
-                                width: 4.w,
-                              ),
+                              SizedBox(width: 4.w),
                               Text(
-                                requestData.phone,
+                                requestData.phoneNumber,
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14.sp,
-                                    color: Colors.black,
-                                    letterSpacing: 0.5),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14.sp,
+                                  color: Colors.black,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
                             ],
                           ),
-                          SizedBox(
-                            height: 5.h,
-                          ),
+                          SizedBox(height: 5.h),
                           Row(
                             children: [
-                              SizedBox(
-                                width: 10.w,
-                              ),
+                              SizedBox(width: 10.w),
                               Text(
-                                "Address:",
+                                "Status:",
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 12.sp,
-                                    color: Colors.black,
-                                    letterSpacing: 0.5),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 12.sp,
+                                  color: Colors.black,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
-                              SizedBox(
-                                width: 4.w,
-                              ),
+                              SizedBox(width: 4.w),
                               Text(
-                                requestData.address,
+                                "",
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13.sp,
-                                    color: Colors.black,
-                                    letterSpacing: 0.5),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13.sp,
+                                  color: Colors.black,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
                             ],
                           ),
-                          SizedBox(
-                            height: 8.h,
-                          ),
+                          SizedBox(height: 8.h),
                           GestureDetector(
                             onTap: () {
                               Navigator.push(
@@ -262,9 +262,8 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                                   builder: (context) => ViewDetails(
                                     name: requestData.name,
                                     additionalInfo: requestData.additionalInfo,
-                                    phone: requestData.phone,
+                                    phone: requestData.phoneNumber,
                                     address: requestData.address,
-                                    price: requestData.price,
                                     paymentStatus: requestData.paymentStatus,
                                   ),
                                 ),
@@ -276,16 +275,17 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                                 Text(
                                   "View details",
                                   style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 14.sp,
-                                      color: hintColor,
-                                      letterSpacing: 0.5),
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14.sp,
+                                    color: hintColor,
+                                    letterSpacing: 0.5,
+                                  ),
                                 ),
                                 Icon(
                                   Icons.arrow_forward_ios,
                                   color: hintColor,
                                   size: 13.sp,
-                                )
+                                ),
                               ],
                             ),
                           )
@@ -293,18 +293,6 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                       ),
                     ),
                   );
-                  // return ListTile(
-                  //   title: Text(requestData.name),
-                  //   subtitle: Column(
-                  //     crossAxisAlignment: CrossAxisAlignment.start,
-                  //     children: [
-                  //       Text('Phone: ${requestData.phone}'),
-                  //       Text('Address: ${requestData.address}'),
-                  //       Text('Payment Status: ${requestData.paymentStatus}'),
-                  //       Text('Additional Info: ${requestData.additionalInfo}'),
-                  //     ],
-                  //   ),
-                  // );
                 },
               );
             }
