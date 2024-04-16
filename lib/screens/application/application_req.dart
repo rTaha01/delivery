@@ -33,7 +33,6 @@ class DeliveryData {
 }
 
 class _ApplicationRequestState extends State<ApplicationRequest> {
-
   late Future<List<DeliveryData>> _futureApplicationRequests;
 
   Future<List<DeliveryData>> _fetchApplicationRequests() async {
@@ -41,11 +40,10 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
     String? phoneNumber = currentUserPhoneNumber();
 
     try {
-      DocumentReference userDocRef = FirebaseFirestore.instance.collection("userApplication").doc(phoneNumber!);
-      QuerySnapshot<Map<String, dynamic>> querySnapshot =
-      await userDocRef.collection("applicationRequest").get();
+      QuerySnapshot querySnapshot =
+          await FirebaseFirestore.instance.collection(phoneNumber!).get();
       for (var doc in querySnapshot.docs) {
-        Map<String, dynamic> data = doc.data();
+        DocumentSnapshot data = await doc.reference.get();
         String name = data['name'] ?? '';
         String number = data['number'] ?? '';
         String address = data['address'] ?? '';
@@ -74,7 +72,6 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
     return applicationRequests;
   }
 
-
   @override
   void initState() {
     super.initState();
@@ -94,7 +91,7 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
           child: Icon(
             Icons.arrow_back_ios_new,
             color: Colors.black87,
-            size: 18.sp,
+            size: 15.sp,
           ),
         ),
         automaticallyImplyLeading: false,
@@ -141,7 +138,7 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                     padding:
                         EdgeInsets.only(left: 10.0.w, right: 10.0.w, top: 5.h),
                     child: Container(
-                      height: 130.h,
+                      height: 135.h,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
                         color: Colors.white,
@@ -166,7 +163,7 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                                 "Order no:",
                                 style: TextStyle(
                                   fontWeight: FontWeight.w500,
-                                  fontSize: 12.sp,
+                                  fontSize: 11.sp,
                                   color: Colors.black,
                                   letterSpacing: 0.5,
                                 ),
@@ -191,7 +188,7 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                                 "Name:",
                                 style: TextStyle(
                                   fontWeight: FontWeight.w500,
-                                  fontSize: 12.sp,
+                                  fontSize: 11.sp,
                                   color: Colors.black,
                                   letterSpacing: 0.5,
                                 ),
@@ -216,7 +213,7 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                                 "Phone:",
                                 style: TextStyle(
                                   fontWeight: FontWeight.w500,
-                                  fontSize: 12.sp,
+                                  fontSize: 11.sp,
                                   color: Colors.black,
                                   letterSpacing: 0.5,
                                 ),
@@ -241,7 +238,7 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                                 "Status:",
                                 style: TextStyle(
                                   fontWeight: FontWeight.w500,
-                                  fontSize: 12.sp,
+                                  fontSize: 11.sp,
                                   color: Colors.black,
                                   letterSpacing: 0.5,
                                 ),
@@ -281,7 +278,7 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                                   "View details",
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
-                                    fontSize: 14.sp,
+                                    fontSize: 12.sp,
                                     color: hintColor,
                                     letterSpacing: 0.5,
                                   ),

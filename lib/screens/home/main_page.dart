@@ -123,12 +123,10 @@ class _MainScreenState extends State<MainScreen> {
       };
       try {
         CommonWidget.loader(context);
-        FirebaseFirestore firestore = FirebaseFirestore.instance;
-        DocumentReference userDocRef =
-            firestore.collection("userApplication").doc(phoneNumber);
-        CollectionReference applicationRequestCollectionRef =
-            userDocRef.collection("applicationRequest");
-        await applicationRequestCollectionRef.add(requestData);
+        await FirebaseFirestore.instance
+            .collection(phoneNumber!)
+            .doc("applicationRequest")
+            .set(requestData);
         Navigator.pop(context);
         _showSubmitSuccessDialog();
         print("Application request saved with order number: $orderNumber");
