@@ -13,7 +13,6 @@ class CommonWidget {
         textColor: Colors.white,
         fontSize: 14.0);
   }
-
   static loader(context) {
     showDialog(
         context: context,
@@ -22,7 +21,7 @@ class CommonWidget {
           return Center(
             child: Image.asset(
               "assets/images/loader.gif",
-              height: 70.h,
+              height: 60.h,
             ),
           );
         });

@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../controller/fetchNumber.dart';
 import '../../utlis/color_codes.dart';
+import '../../widgets/loader.dart';
 
 class ApplicationRequest extends StatefulWidget {
   const ApplicationRequest({super.key});
@@ -32,6 +33,7 @@ class DeliveryData {
 }
 
 class _ApplicationRequestState extends State<ApplicationRequest> {
+
   late Future<List<DeliveryData>> _futureApplicationRequests;
 
   Future<List<DeliveryData>> _fetchApplicationRequests() async {
@@ -39,16 +41,18 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
     String? phoneNumber = currentUserPhoneNumber();
 
     try {
-      QuerySnapshot querySnapshot =
-          await FirebaseFirestore.instance.collection(phoneNumber!).get();
+      DocumentReference userDocRef = FirebaseFirestore.instance.collection("userApplication").doc(phoneNumber!);
+      QuerySnapshot<Map<String, dynamic>> querySnapshot =
+      await userDocRef.collection("applicationRequest").get();
       for (var doc in querySnapshot.docs) {
-        DocumentSnapshot document = await doc.reference.get();
-        String name = document['name'] ?? '';
-        String number = document['number'] ?? '';
-        String address = document['address'] ?? '';
-        String paymentStatus = document['paymentStatus'] ?? '';
-        String additionalInfo = document['additionalInfo'] ?? '';
-        String orderNo = document['orderNo'] ?? '';
+        Map<String, dynamic> data = doc.data();
+        String name = data['name'] ?? '';
+        String number = data['number'] ?? '';
+        String address = data['address'] ?? '';
+        String paymentStatus = data['paymentStatus'] ?? '';
+        String additionalInfo = data['additionalInfo'] ?? '';
+        String orderNo = data['orderNo'] ?? '';
+
         DeliveryData deliveryData = DeliveryData(
           name: name,
           phoneNumber: number,
@@ -69,6 +73,7 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
 
     return applicationRequests;
   }
+
 
   @override
   void initState() {
@@ -107,7 +112,7 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
         future: _futureApplicationRequests,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return Loader();
           } else if (snapshot.hasError) {
             return Center(
               child: Text('Error: ${snapshot.error}'),

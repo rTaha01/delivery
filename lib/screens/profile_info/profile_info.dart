@@ -12,6 +12,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../controller/fetchNumber.dart';
 import '../../utlis/color_codes.dart';
+import '../../widgets/loader.dart';
 import '../home/main_page.dart';
 
 class ProfileSetup extends StatefulWidget {
@@ -118,7 +119,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
         } else if (address == '' || address.isEmpty) {
           CommonWidget.toastMessage("Please! Enter address");
         } else {
-          CommonWidget.loader(context);
+          Loader();
           String? phoneNumber = currentUserPhoneNumber();
           final downloadUrl = await _uploadImage();
           // First, set the initial profile info document if it doesn't exist

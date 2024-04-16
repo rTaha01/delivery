@@ -8,6 +8,7 @@ import 'package:pinput/pinput.dart';
 import '../../../utlis/color_codes.dart';
 import '../../../utlis/common_widget.dart';
 import '../../controller/fetchNumber.dart';
+import '../../widgets/loader.dart';
 
 class PhonePIN extends StatefulWidget {
   final String number;
@@ -54,7 +55,7 @@ class _PhonePINState extends State<PhonePIN> {
         } else if (pin.length < 6) {
           CommonWidget.toastMessage("PIN кеминде 6 сандан турушу керек");
         } else {
-          CommonWidget.loader(context);
+          Loader();
           final credential = PhoneAuthProvider.credential(
             verificationId: widget.verificationId,
             smsCode: pin,

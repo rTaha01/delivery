@@ -1,4 +1,5 @@
 import 'package:delivery_app/auth/phoneInput/phoneCode.dart';
+import 'package:delivery_app/widgets/loader.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -30,7 +31,7 @@ class _ChooseNumberState extends State<ChooseNumber> {
       ).hasMatch(phoneNumber)) {
         CommonWidget.toastMessage("Invalid phone number format");
       } else {
-        CommonWidget.loader(context);
+        Loader();
         await _auth.verifyPhoneNumber(
           phoneNumber: number + phone.text,
           verificationCompleted: (_) async {},

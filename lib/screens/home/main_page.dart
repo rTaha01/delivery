@@ -16,6 +16,7 @@ import '../../auth/chooseNumber.dart';
 import '../../controller/contact_controller.dart';
 import '../../controller/fetchNumber.dart';
 import '../../utlis/color_codes.dart';
+import '../../widgets/loader.dart';
 import '../../widgets/text_field_widget.dart';
 import '../application/application_req.dart';
 
@@ -114,27 +115,20 @@ class _MainScreenState extends State<MainScreen> {
         'name': name,
         'number': number + phone,
         'address': address,
-        'paymentStatus':
-            isPay != null ? (isPay ? 'PAID' : 'UNPAID') : 'UNKNOWN',
+        'paymentStatus': isPay != null
+            ? (isPay ? 'төлөнгөн' : 'төлөнбөгөн (демейки)')
+            : 'UNKNOWN',
         'additionalInfo': additionalInfo.text,
         "date": DateTime.now(),
       };
       try {
         CommonWidget.loader(context);
-        await FirebaseFirestore.instance
-            .collection(phoneNumber!)
-            .doc("applicationRequest $orderNumber")
-            .set(requestData);
-        // String requestUID = docRef.id;
-        //
-        // SharedPreferences prefs = await SharedPreferences.getInstance();
-        // List<String>? storedUIDs = prefs.getStringList('deliveryUIDs');
-        // if (storedUIDs != null) {
-        //   storedUIDs.add(requestUID);
-        // } else {
-        //   storedUIDs = [requestUID];
-        // }
-        // await prefs.setStringList('deliveryUIDs', storedUIDs);
+        FirebaseFirestore firestore = FirebaseFirestore.instance;
+        DocumentReference userDocRef =
+            firestore.collection("userApplication").doc(phoneNumber);
+        CollectionReference applicationRequestCollectionRef =
+            userDocRef.collection("applicationRequest");
+        await applicationRequestCollectionRef.add(requestData);
         Navigator.pop(context);
         _showSubmitSuccessDialog();
         print("Application request saved with order number: $orderNumber");
@@ -154,9 +148,17 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
+  Future<List<Map<String, dynamic>>> fetchBanners() async {
+    final querySnapshot =
+        await FirebaseFirestore.instance.collection('banners').get();
+
+    return querySnapshot.docs.map((doc) => doc.data()).toList();
+  }
+
   @override
   void initState() {
     super.initState();
+    fetchBanners();
     _places =
         GoogleMapsPlaces(apiKey: "AIzaSyDydH0mmsu6erSxfXK31BCrjQwnv7HiqdM");
   }
@@ -170,49 +172,83 @@ class _MainScreenState extends State<MainScreen> {
           child: SafeArea(
             child: Column(
               children: [
-                Container(
-                  height: 80.h,
-                  width: 360.w,
-                  decoration: BoxDecoration(color: Colors.white, boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.shade100,
-                      offset: const Offset(4, 3),
-                    )
-                  ]),
-                  child: CarouselSlider(
-                    items: textList
-                        .map(
-                          (item) => Text(
-                            item['text'],
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w500, fontSize: 35),
-                          ),
-                        )
-                        .toList(),
-                    carouselController: carouselController,
-                    options: CarouselOptions(
-                      scrollPhysics: const BouncingScrollPhysics(),
-                      autoPlay: true,
-                      aspectRatio: 7,
-                      viewportFraction: 1,
-                      onPageChanged: (index, reason) {
-                        setState(() {
-                          currentIndex = index;
-                        });
-                      },
-                    ),
-                  ),
+                FutureBuilder<List<Map<String, dynamic>>>(
+                  future: fetchBanners(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Loader();
+                    } else if (snapshot.hasError) {
+                      return const Center(
+                        child: Text(
+                          'No  Banner',
+                          style: TextStyle(
+                              fontSize: 17, fontWeight: FontWeight.w600),
+                        ),
+                      );
+                    } else {
+                      final banners = snapshot.data!;
+                      return Container(
+                        height: 100.h,
+                        width: 360.w,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.shade100,
+                              offset: const Offset(4, 3),
+                            )
+                          ],
+                        ),
+                        child: CarouselSlider(
+                          options: CarouselOptions(
+                              scrollPhysics: const BouncingScrollPhysics(),
+                              autoPlay: true,
+                              viewportFraction: 1),
+                          items: banners.map((banner) {
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(5),
+                              child: Image.network(
+                                banner['imageUrl'],
+                                width: 350.w,
+                                fit: BoxFit.fill,
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      );
+                    }
+                  },
                 ),
                 SizedBox(
                   height: 10.h,
                 ),
-                SizedBox(
-                  height: 15.h,
-                  child: Marquee(
-                    text: 'Ticker Text will be here       ',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.black),
-                  ),
+                FutureBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  future: FirebaseFirestore.instance
+                      .collection('ticker')
+                      .orderBy('timestamp', descending: true)
+                      .limit(1)
+                      .get(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Loader();
+                    } else if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    } else if (!snapshot.hasData ||
+                        snapshot.data!.docs.isEmpty) {
+                      return const Text('No ticker message found');
+                    } else {
+                      final tickerMessage =
+                          snapshot.data!.docs.first.get('message');
+                      return SizedBox(
+                        height: 15.h,
+                        child: Marquee(
+                          text: '$tickerMessage       ',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, color: Colors.black),
+                        ),
+                      );
+                    }
+                  },
                 ),
                 SizedBox(
                   height: 5.h,
@@ -614,37 +650,151 @@ class _MainScreenState extends State<MainScreen> {
               backgroundColor: Colors.white,
               label: "Logout",
               onTap: () async {
-                await showDialog(
+                await showModalBottomSheet(
                   context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      backgroundColor: Colors.grey.shade100,
-                      title: const Text("Logout"),
-                      content: const Text("Are you sure you want to log out?"),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context, "Cancel");
-                          },
-                          child: const Text("Cancel"),
-                        ),
-                        TextButton(
-                          onPressed: () async {
-                            await FirebaseAuth.instance.signOut();
-                            print("Logout");
-                            Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const ChooseNumber()),
-                              (route) => false,
-                            );
-                          },
-                          child: const Text("OK"),
-                        ),
-                      ],
+                  backgroundColor: Colors.grey.shade50,
+                  elevation: 0,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(15.0),
+                      topRight: Radius.circular(15.0),
+                    ),
+                  ),
+                  builder: (context) {
+                    return SizedBox(
+                      height: 250,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(
+                            height: 20,
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.only(left: 30.0,),
+                            child: Text(
+                              "Are you sure you want to logout?",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          const Padding(
+                            padding: EdgeInsets.only(left: 30.0,),
+                            child: Text(
+                              "You will be logged out of your account.",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+                            child: GestureDetector(
+                              onTap: () async {
+                                await FirebaseAuth.instance.signOut();
+                                print("Logout");
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const ChooseNumber(),
+                                  ),
+                                      (route) => false,
+                                );
+                              },
+                              child: Container(
+                                height: 40.h,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  color: Colors.white,
+                                  border: Border.all(
+                                    color: hintColor,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 10.w,
+                                    ),
+                                     Icon(
+                                      Icons.logout,
+                                      color: hintColor,
+                                      size: 20,
+                                    ),
+                                    SizedBox(
+                                      width: 5.w,
+                                    ),
+                                    const Text(
+                                      "Logout",
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black,
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 15),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context, "Cancel");
+                              },
+                              child: Container(
+                                height: 40.h,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8.0),color: Colors.white,
+                                  border: Border.all(
+                                    color: Colors.black,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 10.w,
+                                    ),
+                                    const Icon(
+                                      Icons.cancel_outlined,
+                                      color: Colors.black,
+                                      size: 20,
+                                    ),
+                                    SizedBox(
+                                      width: 5.w,
+                                    ),
+                                    const Text(
+                                      "Cancel",
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black,
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     );
                   },
                 );
+
               },
               elevation: 0,
               labelShadow: [],
