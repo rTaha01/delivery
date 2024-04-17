@@ -124,9 +124,12 @@ class _MainScreenState extends State<MainScreen> {
       try {
         CommonWidget.loader(context);
         await FirebaseFirestore.instance
-            .collection(phoneNumber!)
-            .doc("applicationRequest")
+            .collection("userRequest")
+            .doc(phoneNumber!)
+            .collection("applicationRequest")
+            .doc(orderNumber)
             .set(requestData);
+
         Navigator.pop(context);
         _showSubmitSuccessDialog();
         print("Application request saved with order number: $orderNumber");
@@ -380,9 +383,6 @@ class _MainScreenState extends State<MainScreen> {
                           )
                         else
                           const SizedBox.shrink(),
-                        Container(
-                          margin: EdgeInsets.only(top: 10.h),
-                        ),
                         Padding(
                           padding: EdgeInsets.only(left: 10.0.w, right: 10.w),
                           child: Container(
@@ -528,6 +528,11 @@ class _MainScreenState extends State<MainScreen> {
                                   color: Colors.black,
                                   size: 20,
                                 )),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black54,
+                            ),
                           ),
                         ),
                         SizedBox(
@@ -669,7 +674,9 @@ class _MainScreenState extends State<MainScreen> {
                             height: 20,
                           ),
                           const Padding(
-                            padding: EdgeInsets.only(left: 30.0,),
+                            padding: EdgeInsets.only(
+                              left: 30.0,
+                            ),
                             child: Text(
                               "Are you sure you want to logout?",
                               style: TextStyle(
@@ -681,7 +688,9 @@ class _MainScreenState extends State<MainScreen> {
                           ),
                           const SizedBox(height: 1),
                           const Padding(
-                            padding: EdgeInsets.only(left: 30.0,),
+                            padding: EdgeInsets.only(
+                              left: 30.0,
+                            ),
                             child: Text(
                               "You will be logged out of your account.",
                               style: TextStyle(
@@ -692,7 +701,8 @@ class _MainScreenState extends State<MainScreen> {
                           ),
                           const SizedBox(height: 20),
                           Padding(
-                            padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+                            padding:
+                                const EdgeInsets.only(left: 20.0, right: 20.0),
                             child: GestureDetector(
                               onTap: () async {
                                 await FirebaseAuth.instance.signOut();
@@ -702,7 +712,7 @@ class _MainScreenState extends State<MainScreen> {
                                   MaterialPageRoute(
                                     builder: (context) => const ChooseNumber(),
                                   ),
-                                      (route) => false,
+                                  (route) => false,
                                 );
                               },
                               child: Container(
@@ -722,7 +732,7 @@ class _MainScreenState extends State<MainScreen> {
                                     SizedBox(
                                       width: 10.w,
                                     ),
-                                     Icon(
+                                    Icon(
                                       Icons.logout,
                                       color: hintColor,
                                       size: 20,
@@ -745,7 +755,8 @@ class _MainScreenState extends State<MainScreen> {
                           ),
                           const SizedBox(height: 15),
                           Padding(
-                            padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+                            padding:
+                                const EdgeInsets.only(left: 20.0, right: 20.0),
                             child: GestureDetector(
                               onTap: () {
                                 Navigator.pop(context, "Cancel");
@@ -754,7 +765,8 @@ class _MainScreenState extends State<MainScreen> {
                                 height: 40.h,
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8.0),color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  color: Colors.white,
                                   border: Border.all(
                                     color: Colors.black,
                                     width: 1.5,
@@ -792,7 +804,6 @@ class _MainScreenState extends State<MainScreen> {
                     );
                   },
                 );
-
               },
               elevation: 0,
               labelShadow: [],

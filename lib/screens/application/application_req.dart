@@ -40,8 +40,11 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
     String? phoneNumber = currentUserPhoneNumber();
 
     try {
-      QuerySnapshot querySnapshot =
-          await FirebaseFirestore.instance.collection(phoneNumber!).get();
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection("userRequest")
+          .doc(phoneNumber!)
+          .collection("applicationRequest")
+          .get();
       for (var doc in querySnapshot.docs) {
         DocumentSnapshot data = await doc.reference.get();
         String name = data['name'] ?? '';

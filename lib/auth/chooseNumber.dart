@@ -31,7 +31,7 @@ class _ChooseNumberState extends State<ChooseNumber> {
       ).hasMatch(phoneNumber)) {
         CommonWidget.toastMessage("Invalid phone number format");
       } else {
-        Loader();
+        CommonWidget.loader(context);
         await _auth.verifyPhoneNumber(
           phoneNumber: number + phone.text,
           verificationCompleted: (_) async {},
@@ -138,12 +138,12 @@ class _ChooseNumberState extends State<ChooseNumber> {
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide:
-                              const BorderSide(color: Colors.black, width: 0.6),
+                              const BorderSide(color: Colors.black, width: 1),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide:
-                              const BorderSide(color: Colors.black, width: 1.5),
+                              const BorderSide(color: Colors.black, width: 2),
                         ),
                         contentPadding: const EdgeInsets.symmetric(vertical: 0),
                         prefixIcon: Padding(

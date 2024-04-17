@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:delivery_app/auth/chooseNumber.dart';
 import 'package:delivery_app/screens/home/main_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +9,6 @@ import 'package:pinput/pinput.dart';
 import '../../../utlis/color_codes.dart';
 import '../../../utlis/common_widget.dart';
 import '../../controller/fetchNumber.dart';
-import '../../widgets/loader.dart';
 
 class PhonePIN extends StatefulWidget {
   final String number;
@@ -55,7 +55,7 @@ class _PhonePINState extends State<PhonePIN> {
         } else if (pin.length < 6) {
           CommonWidget.toastMessage("PIN кеминде 6 сандан турушу керек");
         } else {
-          Loader();
+          CommonWidget.loader(context);
           final credential = PhoneAuthProvider.credential(
             verificationId: widget.verificationId,
             smsCode: pin,
@@ -88,20 +88,6 @@ class _PhonePINState extends State<PhonePIN> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: InkWell(
-          onTap: () {
-            Navigator.pop(context);
-          },
-          child: Icon(
-            Icons.arrow_back_ios_new,
-            color: Colors.black,
-            size: 20.sp,
-          ),
-        ),
-      ),
       body: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -109,7 +95,7 @@ class _PhonePINState extends State<PhonePIN> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               SizedBox(
-                height: 120.h,
+                height: 150.h,
               ),
               Padding(
                 padding: EdgeInsets.only(left: 20.0.w),
