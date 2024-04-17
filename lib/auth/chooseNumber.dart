@@ -1,5 +1,4 @@
 import 'package:delivery_app/auth/phoneInput/phoneCode.dart';
-import 'package:delivery_app/widgets/loader.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
