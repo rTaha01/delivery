@@ -21,6 +21,8 @@ class DeliveryData {
   final String paymentStatus;
   final String additionalInfo;
   final String orderNO;
+  final Color color;
+  final String status;
 
   DeliveryData({
     required this.orderNO,
@@ -28,6 +30,8 @@ class DeliveryData {
     required this.phoneNumber,
     required this.address,
     required this.paymentStatus,
+    required this.color,
+    required this.status,
     required this.additionalInfo,
   });
 }
@@ -53,6 +57,12 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
         String paymentStatus = data['paymentStatus'] ?? '';
         String additionalInfo = data['additionalInfo'] ?? '';
         String orderNo = data['orderNo'] ?? '';
+        String colorCode = data['colorStatus'] ?? '';
+        Color color = colorCode.isNotEmpty
+            ? Color(int.parse('0xFF$colorCode'))
+            : Colors.transparent;
+
+        String statusCode = data['orderStatus'] ?? '';
 
         DeliveryData deliveryData = DeliveryData(
           name: name,
@@ -61,6 +71,8 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
           paymentStatus: paymentStatus,
           additionalInfo: additionalInfo,
           orderNO: orderNo,
+          color: color, // Assign Color object directly
+          status: statusCode,
         );
         applicationRequests.add(deliveryData);
       }
@@ -226,7 +238,7 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                                 requestData.phoneNumber,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 14.sp,
+                                  fontSize: 13.sp,
                                   color: Colors.black,
                                   letterSpacing: 0.5,
                                 ),
@@ -248,11 +260,11 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                               ),
                               SizedBox(width: 4.w),
                               Text(
-                                "",
+                                requestData.status,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 13.sp,
-                                  color: Colors.black,
+                                  fontSize: 14.sp,
+                                  color: Colors.orangeAccent,
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -270,6 +282,8 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                                     phone: requestData.phoneNumber,
                                     address: requestData.address,
                                     paymentStatus: requestData.paymentStatus,
+                                    orderColor: requestData.color,
+                                    statusOrder: requestData.status,
                                   ),
                                 ),
                               );

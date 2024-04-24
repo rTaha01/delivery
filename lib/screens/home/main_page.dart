@@ -119,6 +119,8 @@ class _MainScreenState extends State<MainScreen> {
             ? (isPay ? 'төлөнгөн' : 'төлөнбөгөн (демейки)')
             : 'UNKNOWN',
         'additionalInfo': additionalInfo.text,
+        'orderStatus': 'In processing',
+        'colorStatus': 'FFFFFF', 
         "date": DateTime.now(),
       };
       try {
