@@ -46,6 +46,11 @@
     <key>NSCameraUsageDescription</key>
     <string>Allow access to the camera for capturing images.</string>
 
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key><true/>
+    </dict>
+
 
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>

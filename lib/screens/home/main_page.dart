@@ -1,16 +1,13 @@
 import 'dart:math';
-
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:delivery_app/screens/profile_info/profile_info.dart';
 import 'package:delivery_app/utlis/common_widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_maps_webservice/places.dart';
 import 'package:marquee/marquee.dart';
 import '../../auth/chooseNumber.dart';
 import '../../controller/contact_controller.dart';
@@ -44,57 +41,14 @@ bool? _isPay = false;
 final firestore = FirebaseFirestore.instance;
 
 class _MainScreenState extends State<MainScreen> {
-  GoogleMapsPlaces? _places;
-  List<Prediction> _predictions = [];
-
-  Future<void> _getPlacePredictions(String input) async {
-    if (input.isEmpty) {
-      setState(() {
-        _predictions.clear();
-      });
-      return;
-    }
-
-    final response = await _places!.autocomplete(
-      input,
-      location: Location(lat: 0, lng: 0),
-      radius: 10,
-      language: 'en',
-      types: ['address'],
-      components: [Component(Component.country, 'KG')],
-    );
-
-    if (response.isOkay) {
-      setState(() {
-        _predictions = response.predictions;
-      });
-    } else {
-      if (kDebugMode) {
-        print(response.errorMessage);
-      }
-    }
-  }
-
-  void _selectPlace(Prediction selectedPlace) {
-    setState(() {
-      addressController.text = selectedPlace.description.toString();
-      _predictions.clear();
-    });
-  }
-
   String generateOrderNumber() {
     int randomInt = Random().nextInt(900000) +
         100000; // Random integer between 100000 and 999999
     return "#$randomInt";
   }
 
-  Future<void> _saveApplication(
-    String name,
-    String phone,
-    String address,
-    isPay,
-    String additionInformation,
-  ) async {
+  Future<void> _saveApplication(String name, String phone, String address,
+      isPay, String additionInformation, context) async {
     String? phoneNumber = currentUserPhoneNumber();
     String orderNumber = generateOrderNumber();
     if (name.isEmpty || name == "") {
@@ -119,8 +73,9 @@ class _MainScreenState extends State<MainScreen> {
             ? (isPay ? 'төлөнгөн' : 'төлөнбөгөн (демейки)')
             : 'UNKNOWN',
         'additionalInfo': additionalInfo.text,
-        'orderStatus': 'In processing',
-        'colorStatus': 'FFFFFF', 
+        'orderStatus': 'Processing',
+        'colorStatus': '0xffffab40',
+        'location': 'n',
         "date": DateTime.now(),
       };
       try {
@@ -151,19 +106,23 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  Future<List<Map<String, dynamic>>> fetchBanners() async {
-    final querySnapshot =
-        await FirebaseFirestore.instance.collection('banners').get();
-
-    return querySnapshot.docs.map((doc) => doc.data()).toList();
+  Stream<List<Map<String, dynamic>>> fetchBanners() {
+    try {
+      return FirebaseFirestore.instance
+          .collection('banners')
+          .snapshots()
+          .map((querySnapshot) =>
+          querySnapshot.docs.map((doc) => doc.data()).toList());
+    } catch (e) {
+      print('Error fetching banners: $e');
+      return Stream.value([]); // Return an empty stream on error
+    }
   }
 
   @override
   void initState() {
     super.initState();
     fetchBanners();
-    _places =
-        GoogleMapsPlaces(apiKey: "AIzaSyDydH0mmsu6erSxfXK31BCrjQwnv7HiqdM");
   }
 
   @override
@@ -171,12 +130,11 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
         backgroundColor: primaryColor,
         body: SingleChildScrollView(
-          physics: const NeverScrollableScrollPhysics(),
           child: SafeArea(
             child: Column(
               children: [
-                FutureBuilder<List<Map<String, dynamic>>>(
-                  future: fetchBanners(),
+                StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: fetchBanners(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Loader();
@@ -206,6 +164,7 @@ class _MainScreenState extends State<MainScreen> {
                           options: CarouselOptions(
                               scrollPhysics: const BouncingScrollPhysics(),
                               autoPlay: true,
+                              autoPlayInterval: const Duration(seconds: 3),
                               viewportFraction: 1),
                           items: banners.map((banner) {
                             return ClipRRect(
@@ -301,12 +260,6 @@ class _MainScreenState extends State<MainScreen> {
                           width: double.infinity,
                           child: TextFormField(
                             controller: addressController,
-                            onChanged: (value) {
-                              _getPlacePredictions(value);
-                              if (kDebugMode) {
-                                print("Address : $_getPlacePredictions");
-                              }
-                            },
                             cursorColor: Colors.black,
                             cursorHeight: 20.h,
                             cursorWidth: 1.w,
@@ -336,55 +289,6 @@ class _MainScreenState extends State<MainScreen> {
                                 fontSize: 13.0.sp, fontWeight: FontWeight.w500),
                           ),
                         ),
-                        if (_predictions.isNotEmpty)
-                          SizedBox(
-                            height: 148.h,
-                            child: ListView.builder(
-                              itemCount: _predictions.length,
-                              itemBuilder: (context, index) {
-                                return Column(
-                                  children: [
-                                    SizedBox(height: 5.h),
-                                    GestureDetector(
-                                      onTap: () {
-                                        _selectPlace(_predictions[index]);
-                                      },
-                                      child: Row(
-                                        children: [
-                                          SizedBox(width: 22.w),
-                                          Icon(
-                                            Icons.location_pin,
-                                            color: Colors.black87,
-                                            size: 18.sp,
-                                          ),
-                                          SizedBox(width: 2.w),
-                                          Text(
-                                            _predictions[index]
-                                                .description
-                                                .toString(),
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              fontSize: 11.0.sp,
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.black54,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    SizedBox(height: 5.h),
-                                    Container(
-                                      height: 0.2.h,
-                                      width: 320.w,
-                                      color: Colors.grey.shade400,
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                          )
-                        else
-                          const SizedBox.shrink(),
                         Padding(
                           padding: EdgeInsets.only(left: 10.0.w, right: 10.w),
                           child: Container(
@@ -449,14 +353,14 @@ class _MainScreenState extends State<MainScreen> {
                                     groupValue: _isPay,
                                     onChanged: (value) {
                                       setState(() {
-                                        _isPay = value as bool?;
+                                        _isPay = value;
                                       });
                                     },
                                   ),
                                   const Text(
-                                    "төлөнгөн",
+                                    "ОПЛАЧЕН",
                                     style: TextStyle(
-                                        fontSize: 17,
+                                        fontSize: 15,
                                         fontWeight: FontWeight.w500),
                                   ),
                                 ],
@@ -497,9 +401,9 @@ class _MainScreenState extends State<MainScreen> {
                                     },
                                   ),
                                   const Text(
-                                    "төлөнбөгөн (демейки)",
+                                    "НЕ ОПЛАЧЕН (наличные курьеру)",
                                     style: TextStyle(
-                                        fontSize: 17,
+                                        fontSize: 15,
                                         fontWeight: FontWeight.w500),
                                   ),
                                 ],
@@ -525,10 +429,15 @@ class _MainScreenState extends State<MainScreen> {
                                     color: hintColor,
                                     fontSize: 17,
                                     fontWeight: FontWeight.w600),
-                                prefixIcon: const Icon(
-                                  Icons.info,
-                                  color: Colors.black,
-                                  size: 20,
+                                prefixIcon: GestureDetector(
+                                  onTap: () {
+                                    _showSubmitSuccessDialog();
+                                  },
+                                  child: const Icon(
+                                    Icons.info,
+                                    color: Colors.black,
+                                    size: 20,
+                                  ),
                                 )),
                             style: const TextStyle(
                               fontSize: 15,
@@ -543,11 +452,13 @@ class _MainScreenState extends State<MainScreen> {
                         GestureDetector(
                           onTap: () {
                             _saveApplication(
-                                nameController.text,
-                                numberController.text,
-                                addressController.text,
-                                _isPay,
-                                additionalInfo.text);
+                              nameController.text,
+                              numberController.text,
+                              addressController.text,
+                              _isPay,
+                              additionalInfo.text,
+                              context,
+                            );
                           },
                           child: Container(
                             height: 45.h,
@@ -824,14 +735,32 @@ class _MainScreenState extends State<MainScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Success"),
-          content: const Text("Application submitted successfully!"),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+          backgroundColor: Colors.white,
+          title: Image.asset(
+            "assets/images/congrats.gif",
+            height: 100,
+          ),
+          content: const Text(
+            "Your Application has been submitted successfully!\nCheck the order status click on the МОИ ЗАЯВКИ",
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+          ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text("OK"),
+              child: const Text(
+                "OK",
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
             ),
           ],
         );

@@ -1,8 +1,9 @@
+import 'dart:developer';
 import 'package:delivery_app/screens/application/viewDetails/viewDetails.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../../controller/fetchNumber.dart';
 import '../../utlis/color_codes.dart';
 import '../../widgets/loader.dart';
@@ -21,6 +22,7 @@ class DeliveryData {
   final String paymentStatus;
   final String additionalInfo;
   final String orderNO;
+  final String location;
   final Color color;
   final String status;
 
@@ -31,60 +33,55 @@ class DeliveryData {
     required this.address,
     required this.paymentStatus,
     required this.color,
+    required this.location,
     required this.status,
     required this.additionalInfo,
   });
 }
 
 class _ApplicationRequestState extends State<ApplicationRequest> {
-  late Future<List<DeliveryData>> _futureApplicationRequests;
+  late Stream<List<DeliveryData>> _futureApplicationRequests;
 
-  Future<List<DeliveryData>> _fetchApplicationRequests() async {
-    List<DeliveryData> applicationRequests = [];
+  Stream<List<DeliveryData>> _fetchApplicationRequests() {
     String? phoneNumber = currentUserPhoneNumber();
 
     try {
-      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+      return FirebaseFirestore.instance
           .collection("userRequest")
           .doc(phoneNumber!)
           .collection("applicationRequest")
-          .get();
-      for (var doc in querySnapshot.docs) {
-        DocumentSnapshot data = await doc.reference.get();
-        String name = data['name'] ?? '';
-        String number = data['number'] ?? '';
-        String address = data['address'] ?? '';
-        String paymentStatus = data['paymentStatus'] ?? '';
-        String additionalInfo = data['additionalInfo'] ?? '';
-        String orderNo = data['orderNo'] ?? '';
-        String colorCode = data['colorStatus'] ?? '';
+          .snapshots()
+          .map((querySnapshot) => querySnapshot.docs.map((doc) {
+        String name = doc['name'] ?? '';
+        String number = doc['number'] ?? '';
+        String address = doc['address'] ?? '';
+        String paymentStatus = doc['paymentStatus'] ?? '';
+        String additionalInfo = doc['additionalInfo'] ?? '';
+        String orderNo = doc['orderNo'] ?? '';
+        String colorCode = doc['colorStatus'] ?? '';
+        String locationAddress = doc['location'] ?? '';
         Color color = colorCode.isNotEmpty
-            ? Color(int.parse('0xFF$colorCode'))
+            ? Color(int.parse('0x$colorCode'))
             : Colors.transparent;
 
-        String statusCode = data['orderStatus'] ?? '';
+        String statusCode = doc['orderStatus'] ?? '';
 
-        DeliveryData deliveryData = DeliveryData(
+        return DeliveryData(
           name: name,
           phoneNumber: number,
           address: address,
           paymentStatus: paymentStatus,
           additionalInfo: additionalInfo,
           orderNO: orderNo,
-          color: color, // Assign Color object directly
+          color: color,
           status: statusCode,
+          location: locationAddress,
         );
-        applicationRequests.add(deliveryData);
-      }
-
-      if (querySnapshot.docs.isEmpty) {
-        print('No application requests found for $phoneNumber');
-      }
+      }).toList());
     } catch (e) {
-      print('Error fetching application requests: $e');
+      log('Error fetching application requests: $e');
+      return Stream.value([]); // Return an empty stream on error
     }
-
-    return applicationRequests;
   }
 
   @override
@@ -96,8 +93,9 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
         leading: GestureDetector(
           onTap: () {
@@ -120,11 +118,11 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
           ),
         ),
       ),
-      body: FutureBuilder<List<DeliveryData>>(
-        future: _futureApplicationRequests,
+      body: StreamBuilder<List<DeliveryData>>(
+        stream: _futureApplicationRequests,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Loader();
+            return const Loader();
           } else if (snapshot.hasError) {
             return Center(
               child: Text('Error: ${snapshot.error}'),
@@ -170,7 +168,7 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox(height: 10.h),
+                          SizedBox(height: 8.h),
                           Row(
                             children: [
                               SizedBox(width: 10.w),
@@ -196,29 +194,32 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                             ],
                           ),
                           SizedBox(height: 5.h),
-                          Row(
-                            children: [
-                              SizedBox(width: 10.w),
-                              Text(
-                                "Name:",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 11.sp,
-                                  color: Colors.black,
-                                  letterSpacing: 0.5,
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                SizedBox(width: 10.w),
+                                Text(
+                                  "Name:",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 11.sp,
+                                    color: Colors.black,
+                                    letterSpacing: 0.5,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(width: 4.w),
-                              Text(
-                                requestData.name,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14.sp,
-                                  color: Colors.black,
-                                  letterSpacing: 0.5,
+                                SizedBox(width: 4.w),
+                                Text(
+                                  requestData.name,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14.sp,
+                                    color: Colors.black,
+                                    letterSpacing: 0.5,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           SizedBox(height: 5.h),
                           Row(
@@ -262,9 +263,9 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                               Text(
                                 requestData.status,
                                 style: TextStyle(
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w800,
                                   fontSize: 14.sp,
-                                  color: Colors.orangeAccent,
+                                  color: requestData.color,
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -284,9 +285,13 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                                     paymentStatus: requestData.paymentStatus,
                                     orderColor: requestData.color,
                                     statusOrder: requestData.status,
+                                    location: requestData.location,
                                   ),
                                 ),
                               );
+                              if (kDebugMode) {
+                                print(requestData.color);
+                              }
                             },
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
