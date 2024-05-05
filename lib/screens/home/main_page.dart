@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:marquee/marquee.dart';
 import '../../auth/chooseNumber.dart';
 import '../../controller/contact_controller.dart';
@@ -30,7 +31,6 @@ List textList = [
   {"id": 3, "text": 'banner 3'}
 ];
 final CarouselController carouselController = CarouselController();
-int currentIndex = 0;
 String contactNumber = "+996558149761";
 TextEditingController nameController = TextEditingController();
 TextEditingController numberController = TextEditingController();
@@ -46,6 +46,7 @@ class _MainScreenState extends State<MainScreen> {
         100000; // Random integer between 100000 and 999999
     return "#$randomInt";
   }
+
 
   Future<void> _saveApplication(String name, String phone, String address,
       isPay, String additionInformation, context) async {
@@ -65,18 +66,18 @@ class _MainScreenState extends State<MainScreen> {
       CommonWidget.toastMessage("Add Some additional information");
     } else {
       Map<String, dynamic> requestData = {
-        'orderNo': orderNumber,
+        'orderNo': DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now()),
         'name': name,
         'number': number + phone,
         'address': address,
         'paymentStatus': isPay != null
             ? (isPay ? 'төлөнгөн' : 'төлөнбөгөн (демейки)')
             : 'UNKNOWN',
+        'price': "0",
         'additionalInfo': additionalInfo.text,
         'orderStatus': 'Processing',
-        'colorStatus': '0xffffab40',
+        'colorStatus': 'ffffab40',
         'location': 'n',
-        "date": DateTime.now(),
       };
       try {
         CommonWidget.loader(context);
@@ -89,7 +90,7 @@ class _MainScreenState extends State<MainScreen> {
 
         Navigator.pop(context);
         _showSubmitSuccessDialog();
-        print("Application request saved with order number: $orderNumber");
+        print("Application request saved with index number: $orderNumber");
         setState(() {
           nameController.clear();
           numberController.clear();
@@ -106,13 +107,12 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
+
   Stream<List<Map<String, dynamic>>> fetchBanners() {
     try {
-      return FirebaseFirestore.instance
-          .collection('banners')
-          .snapshots()
-          .map((querySnapshot) =>
-          querySnapshot.docs.map((doc) => doc.data()).toList());
+      return FirebaseFirestore.instance.collection('banners').snapshots().map(
+          (querySnapshot) =>
+              querySnapshot.docs.map((doc) => doc.data()).toList());
     } catch (e) {
       print('Error fetching banners: $e');
       return Stream.value([]); // Return an empty stream on error

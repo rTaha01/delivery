@@ -20,6 +20,7 @@ class DeliveryData {
   final String phoneNumber;
   final String address;
   final String paymentStatus;
+  final String price;
   final String additionalInfo;
   final String orderNO;
   final String location;
@@ -32,6 +33,7 @@ class DeliveryData {
     required this.phoneNumber,
     required this.address,
     required this.paymentStatus,
+    required this.price,
     required this.color,
     required this.location,
     required this.status,
@@ -56,6 +58,7 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
         String number = doc['number'] ?? '';
         String address = doc['address'] ?? '';
         String paymentStatus = doc['paymentStatus'] ?? '';
+        String price = doc['price'] ?? '';
         String additionalInfo = doc['additionalInfo'] ?? '';
         String orderNo = doc['orderNo'] ?? '';
         String colorCode = doc['colorStatus'] ?? '';
@@ -71,6 +74,7 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
           phoneNumber: number,
           address: address,
           paymentStatus: paymentStatus,
+          price: price,
           additionalInfo: additionalInfo,
           orderNO: orderNo,
           color: color,
@@ -173,7 +177,7 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                             children: [
                               SizedBox(width: 10.w),
                               Text(
-                                "Order no:",
+                                "Date:",
                                 style: TextStyle(
                                   fontWeight: FontWeight.w500,
                                   fontSize: 11.sp,
@@ -286,6 +290,7 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
                                     orderColor: requestData.color,
                                     statusOrder: requestData.status,
                                     location: requestData.location,
+                                    price: requestData.price,
                                   ),
                                 ),
                               );

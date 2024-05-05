@@ -38,9 +38,6 @@ dependencies:
   flutter_screenutil: ^5.9.0
   marquee: ^2.2.3
   carousel_slider: ^4.2.1
-  google_maps_flutter: ^2.6.0
-  google_maps_webservice:
-  google_api_headers:
   http:
   flutter_speed_dial: ^7.0.0
   url_launcher: ^6.0.12
@@ -57,6 +54,7 @@ dependencies:
   path_provider: ^2.1.2
   shared_preferences: ^2.2.2
   connectivity_plus: ^6.0.3
+  intl: ^0.17.0
 
 
 dev_dependencies:

@@ -12,6 +12,7 @@ class ViewDetails extends StatefulWidget {
   final String phone;
   final String address;
   final String paymentStatus;
+  final String price;
   final String additionalInfo;
   final String location;
   final Color orderColor;
@@ -22,6 +23,7 @@ class ViewDetails extends StatefulWidget {
       required this.phone,
       required this.address,
       required this.paymentStatus,
+      required this.price,
       required this.location,
       required this.orderColor,
       required this.statusOrder,
@@ -107,10 +109,6 @@ class _ViewDetailsState extends State<ViewDetails> {
               ),
             ),
           ),
-          CustomContainerWidget(
-            value: 'Payment Status: ',
-            text: widget.paymentStatus,
-          ),
           Padding(
             padding: const EdgeInsets.only(left: 15.0, right: 15.0, top: 10),
             child: Container(
@@ -129,7 +127,7 @@ class _ViewDetailsState extends State<ViewDetails> {
                       children: [
                         SizedBox(width: 10.w),
                         Text(
-                          "Location: ",
+                          "Payment Status: ",
                           style: TextStyle(
                             fontWeight: FontWeight.w500,
                             fontSize: 11.sp,
@@ -139,7 +137,7 @@ class _ViewDetailsState extends State<ViewDetails> {
                         ),
                         SizedBox(width: 4.w),
                         SelectableText(
-                          widget.location,
+                          " ${widget.paymentStatus}  + лв${widget.price}",
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 13.sp,
@@ -148,6 +146,45 @@ class _ViewDetailsState extends State<ViewDetails> {
                           ),
                         ),
                       ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 15.0, right: 15.0, top: 10),
+            child: Container(
+              height: 40.h,
+              width: 350.w,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey.shade100,
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    SizedBox(width: 10.w),
+                    Text(
+                      "Location: ",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 11.sp,
+                        color: Colors.black,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    SizedBox(width: 4.w),
+                    SelectableText(
+                      widget.location,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.sp,
+                        color: Colors.black,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ],
                 ),

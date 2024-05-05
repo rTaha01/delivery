@@ -1,8 +1,7 @@
 import 'package:delivery_app/utlis/common_widget.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:google_maps_webservice/places.dart';
 import 'package:image/image.dart' as imageLib;
 import 'package:path_provider/path_provider.dart' as path_provider;
 import 'dart:io';
@@ -24,49 +23,16 @@ class ProfileSetup extends StatefulWidget {
 }
 
 class _ProfileSetupState extends State<ProfileSetup> {
-  GoogleMapsPlaces? places;
-  List<Prediction> predictionsList = [];
+
 
   final _formKey = GlobalKey<FormState>();
   File? _image;
+  String? profileImageUrl;
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
   final _emailController = TextEditingController();
 
-  Future<void> _getPredictions(String select) async {
-    if (select.isEmpty) {
-      setState(() {
-        predictionsList.clear();
-      });
-      return;
-    }
 
-    final getValue = await places!.autocomplete(
-      select,
-      location: Location(lat: 0, lng: 0),
-      radius: 10,
-      language: 'en',
-      types: ['address'],
-      components: [Component(Component.country, 'KG')],
-    );
-
-    if (getValue.isOkay) {
-      setState(() {
-        predictionsList = getValue.predictions;
-      });
-    } else {
-      if (kDebugMode) {
-        print(getValue.errorMessage);
-      }
-    }
-  }
-
-  Future<void> selectPlace(Prediction choosePlace) async {
-    setState(() {
-      _addressController.text = choosePlace.description.toString();
-      predictionsList.clear();
-    });
-  }
 
   Future<void> _selectImage() async {
     final picker = ImagePicker();
@@ -77,7 +43,21 @@ class _ProfileSetupState extends State<ProfileSetup> {
       });
     }
   }
-
+  Future<void> fetchProfileDetails() async {
+    String? phoneNumber = currentUserPhoneNumber();
+    final profileDoc = await FirebaseFirestore.instance
+        .collection(phoneNumber!)
+        .doc('Profile Info')
+        .get();
+    if (profileDoc.exists) {
+      setState(() {
+        _nameController.text = profileDoc['name'];
+        _emailController.text = profileDoc['email'];
+        _addressController.text = profileDoc['address'];
+        profileImageUrl = profileDoc['profileImageUrl'];
+      });
+    }
+  }
   Future<String> _uploadImage() async {
     final storageRef = FirebaseStorage.instance.ref();
     final user = FirebaseAuth.instance.currentUser!;
@@ -119,7 +99,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
         } else if (address == '' || address.isEmpty) {
           CommonWidget.toastMessage("Please! Enter address");
         } else {
-          Loader();
+          const Loader();
           String? phoneNumber = currentUserPhoneNumber();
           final downloadUrl = await _uploadImage();
           // First, set the initial profile info document if it doesn't exist
@@ -161,8 +141,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
   @override
   void initState() {
     super.initState();
-    places =
-        GoogleMapsPlaces(apiKey: "AIzaSyDydH0mmsu6erSxfXK31BCrjQwnv7HiqdM");
+    fetchProfileDetails();
   }
 
   @override
@@ -199,28 +178,55 @@ class _ProfileSetupState extends State<ProfileSetup> {
             key: _formKey,
             child: Column(
               children: [
-                GestureDetector(
-                  onTap: _selectImage,
-                  child: Container(
-                      height: 130.h,
-                      width: 150.w,
-                      decoration: BoxDecoration(
+                Stack(
+                  children: [
+                    GestureDetector(
+                      onTap: _selectImage,
+                      child: Container(
+                        height: 130.h,
+                        width: 150.w,
+                        decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(100),
-                          border: Border.all(
-                              color: Colors.grey.shade300, width: 1)),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(100),
-                        child: _image != null
-                            ? Image.file(
-                                _image!,
-                                fit: BoxFit.fill,
-                              )
-                            : Icon(
-                                Icons.person,
-                                size: 80.sp,
-                                color: hintColor,
-                              ),
-                      )),
+                          border: Border.all(color: Colors.grey.shade300, width: 1),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(100),
+                          child: _image != null
+                              ? Image.file(
+                            _image!,
+                            fit: BoxFit.fill,
+                          )
+                              : profileImageUrl != null
+                              ? Image.network(
+                            profileImageUrl!,
+                            fit: BoxFit.fill,
+                          )
+                              : Icon(
+                            Icons.person,
+                            size: 80.sp,
+                            color: hintColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: _selectImage,
+                      child: Padding(
+                        padding:  EdgeInsets.only(left: 100.w,top: 100.h),
+                        child: Container(
+                          height: 30.h,
+                          width: 50.w,
+                          decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.orangeAccent
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.edit,color: Colors.black,size: 20,),
+                          ),
+                        ),
+                      ),
+                    )
+                  ],
                 ),
                 SizedBox(
                   height: 25.h,
@@ -322,12 +328,6 @@ class _ProfileSetupState extends State<ProfileSetup> {
                       cursorColor: Colors.black,
                       cursorHeight: 20.h,
                       cursorWidth: 1.w,
-                      onChanged: (value) {
-                        _getPredictions(value);
-                        if (kDebugMode) {
-                          print("Address : $_getPredictions");
-                        }
-                      },
                       decoration: InputDecoration(
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -354,55 +354,6 @@ class _ProfileSetupState extends State<ProfileSetup> {
                     ),
                   ),
                 ),
-                if (predictionsList.isNotEmpty)
-                  SizedBox(
-                    height: 148.h,
-                    child: ListView.builder(
-                      itemCount: predictionsList.length,
-                      itemBuilder: (context, index) {
-                        return Column(
-                          children: [
-                            SizedBox(height: 5.h),
-                            GestureDetector(
-                              onTap: () {
-                                selectPlace(predictionsList[index]);
-                              },
-                              child: Row(
-                                children: [
-                                  SizedBox(width: 22.w),
-                                  Icon(
-                                    Icons.location_pin,
-                                    color: Colors.black87,
-                                    size: 18.sp,
-                                  ),
-                                  SizedBox(width: 2.w),
-                                  Text(
-                                    predictionsList[index]
-                                        .description
-                                        .toString(),
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 11.0.sp,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(height: 5.h),
-                            Container(
-                              height: 0.2.h,
-                              width: 320.w,
-                              color: Colors.grey.shade400,
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  )
-                else
-                  const SizedBox.shrink(),
                 SizedBox(
                   height: 30.h,
                 ),
