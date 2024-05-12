@@ -29,6 +29,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
   File? _image;
   String? profileImageUrl;
   final _nameController = TextEditingController();
+  final numberController = TextEditingController();
   final _addressController = TextEditingController();
   final _emailController = TextEditingController();
 
@@ -46,12 +47,13 @@ class _ProfileSetupState extends State<ProfileSetup> {
   Future<void> fetchProfileDetails() async {
     String? phoneNumber = currentUserPhoneNumber();
     final profileDoc = await FirebaseFirestore.instance
-        .collection(phoneNumber!)
-        .doc('Profile Info')
+        .collection("userProfile")
+        .doc(phoneNumber)
         .get();
     if (profileDoc.exists) {
       setState(() {
         _nameController.text = profileDoc['name'];
+        numberController.text = profileDoc['number'];
         _emailController.text = profileDoc['email'];
         _addressController.text = profileDoc['address'];
         profileImageUrl = profileDoc['profileImageUrl'];
@@ -83,6 +85,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
 
   Future<void> _saveProfile(
     String name,
+    String? number,
     String email,
     String address,
     context,
@@ -93,30 +96,39 @@ class _ProfileSetupState extends State<ProfileSetup> {
           return CommonWidget.toastMessage("Please Select Image");
         } else if (name == "" || name.isEmpty || name.length < 4) {
           CommonWidget.toastMessage("Enter your name");
-        } else if (!RegExp(r'^[\w-]+(\.[\w-]+)*@([a-z\d-]+\.)+[a-z]{2,}$')
+        } else if (number == null || number.isEmpty) {
+          CommonWidget.toastMessage("Phone number is required");
+        } else if (!RegExp(
+          r'^\+?(?:[0-9]\s?){6,14}[0-9]$',
+        ).hasMatch(number)) {
+          CommonWidget.toastMessage("Invalid phone number format");
+        }
+
+        else if (!RegExp(r'^[\w-]+(\.[\w-]+)*@([a-z\d-]+\.)+[a-z]{2,}$')
             .hasMatch(email)) {
           CommonWidget.toastMessage("Please! Enter Email correctly");
         } else if (address == '' || address.isEmpty) {
           CommonWidget.toastMessage("Please! Enter address");
         } else {
-          const Loader();
+          CommonWidget.loader(context);
           String? phoneNumber = currentUserPhoneNumber();
           final downloadUrl = await _uploadImage();
-          // First, set the initial profile info document if it doesn't exist
           await FirebaseFirestore.instance
-              .collection(phoneNumber!)
-              .doc('Profile Info')
+              .collection("userProfile")
+              .doc(phoneNumber!)
               .set({
             'name': _nameController.text,
+            'number': numberController.text,
             'address': _addressController.text,
             'email': _emailController.text,
             'profileImageUrl': downloadUrl,
           }, SetOptions(merge: true));
           await FirebaseFirestore.instance
-              .collection(phoneNumber)
-              .doc('Profile Info')
+              .collection("userProfile")
+              .doc(phoneNumber)
               .update({
             'name': _nameController.text,
+            'number': numberController.text,
             'address': _addressController.text,
             'email': _emailController.text,
             'profileImageUrl': downloadUrl,
@@ -281,6 +293,49 @@ class _ProfileSetupState extends State<ProfileSetup> {
                       right: 5.w,
                     ),
                     child: TextFormField(
+                      controller: numberController,
+                      cursorColor: Colors.black,
+                      keyboardType: TextInputType.number,
+                      cursorHeight: 20.h,
+                      cursorWidth: 1.w,
+                      textAlign: TextAlign.start,
+                      decoration: InputDecoration(
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                                color: Colors.black, width: 0.6),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide:
+                            BorderSide(color: hintColor, width: 1.5),
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.account_circle_rounded,
+                            color: Colors.black87,
+                          ),
+                          contentPadding: EdgeInsets.symmetric(vertical: 10.h),
+                          hintText: "Enter Your Number",
+                          hintStyle: TextStyle(
+                            color: hintColor,
+                            fontSize: 13.sp,
+                          )),
+                      style: TextStyle(
+                          fontSize: 13.0.sp, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 15.h,
+                ),
+                SizedBox(
+                  height: 40.h,
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      left: 5.0.w,
+                      right: 5.w,
+                    ),
+                    child: TextFormField(
                       controller: _emailController,
                       cursorColor: Colors.black,
                       cursorHeight: 20.h,
@@ -365,9 +420,10 @@ class _ProfileSetupState extends State<ProfileSetup> {
                     child: ElevatedButton(
                       onPressed: () {
                         _saveProfile(
-                            _nameController.text.toString(),
-                            _emailController.text.toString(),
-                            _addressController.text.toString(),
+                            _nameController.text.trim(),
+                            numberController.text.trim(),
+                            _emailController.text.trim(),
+                            _addressController.text.trim(),
                             context);
                       },
                       style: ButtonStyle(

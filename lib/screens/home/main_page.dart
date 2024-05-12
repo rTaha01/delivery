@@ -37,7 +37,6 @@ TextEditingController numberController = TextEditingController();
 TextEditingController addressController = TextEditingController();
 TextEditingController additionalInfo = TextEditingController();
 String number = "+92";
-bool? _isPay = false;
 final firestore = FirebaseFirestore.instance;
 
 class _MainScreenState extends State<MainScreen> {
@@ -46,7 +45,6 @@ class _MainScreenState extends State<MainScreen> {
         100000; // Random integer between 100000 and 999999
     return "#$randomInt";
   }
-
 
   Future<void> _saveApplication(String name, String phone, String address,
       isPay, String additionInformation, context) async {
@@ -66,9 +64,11 @@ class _MainScreenState extends State<MainScreen> {
       CommonWidget.toastMessage("Add Some additional information");
     } else {
       Map<String, dynamic> requestData = {
-        'orderNo': DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now()),
+        'date': DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now()),
+        'orderNo': orderNumber,
         'name': name,
-        'number': number + phone,
+        'phoneNumber': number + phone,
+        "userNumber": phoneNumber,
         'address': address,
         'paymentStatus': isPay != null
             ? (isPay ? 'төлөнгөн' : 'төлөнбөгөн (демейки)')
@@ -107,7 +107,6 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-
   Stream<List<Map<String, dynamic>>> fetchBanners() {
     try {
       return FirebaseFirestore.instance.collection('banners').snapshots().map(
@@ -118,6 +117,8 @@ class _MainScreenState extends State<MainScreen> {
       return Stream.value([]); // Return an empty stream on error
     }
   }
+
+  bool? _isPay = false;
 
   @override
   void initState() {
@@ -192,7 +193,7 @@ class _MainScreenState extends State<MainScreen> {
                       .get(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Loader();
+                      return SizedBox(height: 15.h, child: const Loader());
                     } else if (snapshot.hasError) {
                       return Text('Error: ${snapshot.error}');
                     } else if (!snapshot.hasData ||
@@ -429,15 +430,10 @@ class _MainScreenState extends State<MainScreen> {
                                     color: hintColor,
                                     fontSize: 17,
                                     fontWeight: FontWeight.w600),
-                                prefixIcon: GestureDetector(
-                                  onTap: () {
-                                    _showSubmitSuccessDialog();
-                                  },
-                                  child: const Icon(
-                                    Icons.info,
-                                    color: Colors.black,
-                                    size: 20,
-                                  ),
+                                prefixIcon: const Icon(
+                                  Icons.info,
+                                  color: Colors.black,
+                                  size: 20,
                                 )),
                             style: const TextStyle(
                               fontSize: 15,
@@ -734,35 +730,51 @@ class _MainScreenState extends State<MainScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-          backgroundColor: Colors.white,
-          title: Image.asset(
-            "assets/images/congrats.gif",
-            height: 100,
-          ),
-          content: const Text(
-            "Your Application has been submitted successfully!\nCheck the order status click on the МОИ ЗАЯВКИ",
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text(
-                "OK",
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-          ],
+        return FutureBuilder<QuerySnapshot>(
+          future: FirebaseFirestore.instance.collection('SuccessfulBanner').get(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: Loader());
+            } else {
+              final docs = snapshot.data!.docs;
+              final List<Widget> banners = docs.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final imageUrl = data['imageUrl'];
+                final title = data['title'];
+
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                  backgroundColor: Colors.white,
+                  title: Image.network(
+                    imageUrl,
+                  ),
+                  content: Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 20,
+                      color: Colors.black,
+                    ),
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text(
+                        "OK",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }).toList();
+              return banners.isNotEmpty ? banners.first : Container();
+            }
+          },
         );
       },
     );

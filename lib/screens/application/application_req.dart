@@ -55,13 +55,13 @@ class _ApplicationRequestState extends State<ApplicationRequest> {
           .snapshots()
           .map((querySnapshot) => querySnapshot.docs.map((doc) {
         String name = doc['name'] ?? '';
-        String number = doc['number'] ?? '';
+        String number = doc['phoneNumber'] ?? '';
         String address = doc['address'] ?? '';
         String paymentStatus = doc['paymentStatus'] ?? '';
         String price = doc['price'] ?? '';
         String additionalInfo = doc['additionalInfo'] ?? '';
         String orderNo = doc['orderNo'] ?? '';
-        String colorCode = doc['colorStatus'] ?? '';
+        String colorCode = doc['colorStatus'] ?? 'null';
         String locationAddress = doc['location'] ?? '';
         Color color = colorCode.isNotEmpty
             ? Color(int.parse('0x$colorCode'))
